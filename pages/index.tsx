@@ -1,8 +1,10 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
+import prisma from '../lib/prisma';
+import { GetStaticProps } from 'next';
 
-export default function Home() {
+export default function Home({ coins, totalProofOfWorkMarketCap }) {
   return (
     <div className={styles.container}>
       <Head>
@@ -12,7 +14,19 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
+        <p>Total: ${totalProofOfWorkMarketCap}</p>
+        <table>
+          <tbody>
+            {coins.map((coin) => (
+              <tr>
+                <td>{coin.coinName}</td>
+                <td>${coin.marketCap}</td>
+                <td>{Math.round(coin.marketCap / totalProofOfWorkMarketCap * 100 * 100) / 100}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {/* <h1 className={styles.title}>
           Welcome to <a href="https://nextjs.org">Next.js!</a>
         </h1>
 
@@ -49,10 +63,10 @@ export default function Home() {
               Instantly deploy your Next.js site to a public URL with Vercel.
             </p>
           </a>
-        </div>
+        </div> */}
       </main>
 
-      <footer className={styles.footer}>
+      {/* <footer className={styles.footer}>
         <a
           href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
           target="_blank"
@@ -63,7 +77,38 @@ export default function Home() {
             <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
           </span>
         </a>
-      </footer>
+      </footer> */}
     </div>
   )
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const coins = await prisma.coin.findMany({
+    where: { 
+      proofType: "PoW",
+      isTrading: true,
+      marketCap: {
+        gt: 0
+      }
+    },
+    orderBy: {
+      marketCap: 'desc'
+    }
+  });
+  const cleanedCoins = coins.map((coin) => ({
+    ...coin,
+    marketCap: coin.marketCap.toNumber(),
+    // ...
+  }));
+  const totalProofOfWorkMarketCap = Math.round(cleanedCoins.reduce((prev, current) => {
+    return prev + current.marketCap;
+  }, 0) * 100) / 100;
+
+  return {
+    props: { 
+      coins: cleanedCoins,
+      totalProofOfWorkMarketCap: totalProofOfWorkMarketCap 
+    },
+    revalidate: 10,
+  };
+};
