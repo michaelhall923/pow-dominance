@@ -14,13 +14,13 @@ export default function Home({ coins, totalProofOfWorkMarketCap }) {
       </Head>
 
       <main className={styles.main}>
-        <p>Total: ${totalProofOfWorkMarketCap}</p>
+        <p>Total: ${totalProofOfWorkMarketCap.toLocaleString()}</p>
         <table>
           <tbody>
             {coins.map((coin) => (
               <tr key={coin.id}>
                 <td>{coin.coinName}</td>
-                <td>${coin.marketCap}</td>
+                <td>${coin.marketCap.toLocaleString()}</td>
                 <td>{Math.round(coin.marketCap / totalProofOfWorkMarketCap * 100 * 100) / 100}%</td>
               </tr>
             ))}
