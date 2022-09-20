@@ -18,7 +18,7 @@ export default function Home({ coins, totalProofOfWorkMarketCap }) {
         <table>
           <tbody>
             {coins.map((coin) => (
-              <tr>
+              <tr key={coin.id}>
                 <td>{coin.coinName}</td>
                 <td>${coin.marketCap}</td>
                 <td>{Math.round(coin.marketCap / totalProofOfWorkMarketCap * 100 * 100) / 100}%</td>
