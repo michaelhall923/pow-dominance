@@ -30,5 +30,21 @@ export default async function handler(req, res) {
         skipDuplicates: true,
     });
 
+    for (var i = 0; i < coins.length; i++) {
+        var coin = coins[i];
+        await prisma.coin.update({
+            where: {
+                id: coin.id
+            },
+            data: {
+                name: coin.name,
+                symbol: coin.symbol,
+                isPoW: coin.isPoW,
+                price: coin.price,
+                marketCap: coin.marketCap
+            }
+        });
+    }
+
     res.status(200).json({ coins: coins })
 }
