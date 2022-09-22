@@ -31,13 +31,11 @@ model User {
 }
 
 model Coin {
-  id        String     @default(cuid()) @id
+  id        Int      @id @default(autoincrement())
   name      String
   symbol    String     @unique
-  coinName  String
-  fullName  String
-  proofType String
-  isTrading Boolean
+  isPoW     Boolean
+  price     Decimal @db.Decimal(65, 2)
   marketCap Decimal @db.Decimal(65, 2)
   @@map(name: "coins")
 }

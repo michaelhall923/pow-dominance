@@ -1,3 +1,4 @@
+import Rectangle from "../components/Rectangle/Rectangle";
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
@@ -14,13 +15,14 @@ export default function Home({ coins, totalProofOfWorkMarketCap }) {
       </Head>
 
       <main className={styles.main}>
+        <Rectangle coins={coins} />
         <p>Total: ${totalProofOfWorkMarketCap.toLocaleString()}</p>
         <table>
           <tbody>
             {coins.map((coin) => (
               <tr key={coin.id}>
-                <td>{coin.coinName}</td>
-                <td>${coin.marketCap.toLocaleString()}</td>
+                <td>{coin.name}</td>
+                <td>${formatMarketCap(coin.marketCap)}</td>
                 <td>{Math.round(coin.marketCap / totalProofOfWorkMarketCap * 100 * 100) / 100}%</td>
               </tr>
             ))}
@@ -82,11 +84,10 @@ export default function Home({ coins, totalProofOfWorkMarketCap }) {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps = async () => {
   const coins = await prisma.coin.findMany({
     where: { 
-      proofType: "PoW",
-      isTrading: true,
+      isPoW: true,
       marketCap: {
         gt: 0
       }
@@ -95,20 +96,44 @@ export const getStaticProps: GetStaticProps = async () => {
       marketCap: 'desc'
     }
   });
-  const cleanedCoins = coins.map((coin) => ({
+  var cleanedCoins = coins.map((coin) => ({
     ...coin,
     marketCap: coin.marketCap.toNumber(),
+    price: coin.price.toNumber(),
     // ...
   }));
-  const totalProofOfWorkMarketCap = Math.round(cleanedCoins.reduce((prev, current) => {
+  var otherCoins = cleanedCoins.slice(10);
+  cleanedCoins = cleanedCoins.slice(0, 10);
+  var otherCoin = {
+    id: 0,
+    name: "Other",
+    symbol: "",
+    marketCap: otherCoins.reduce((prev, current) => { return prev + current.marketCap; }, 0),
+    price: 0,
+    isPoW: true
+  };
+  cleanedCoins.push(otherCoin);
+  var totalProofOfWorkMarketCap = cleanedCoins.reduce((prev, current) => {
     return prev + current.marketCap;
-  }, 0) * 100) / 100;
+  }, 0);
 
   return {
     props: { 
       coins: cleanedCoins,
-      totalProofOfWorkMarketCap: totalProofOfWorkMarketCap 
+      totalProofOfWorkMarketCap: totalProofOfWorkMarketCap,
     },
     revalidate: 10,
   };
 };
+
+function formatMarketCap(marketCap) {
+  if (marketCap >= 1000000000000 ) { // >= 1 trillion
+    return (Math.round(marketCap / 100000000000) / 10).toFixed(1) + "T";
+  } else if (marketCap >= 1000000000 ) { // >= 1 billion
+    return (Math.round(marketCap / 100000000) / 10).toFixed(1) + "B";
+  } else if (marketCap >= 1000000 ) { // >= 1 million
+    return (Math.round(marketCap / 100000) / 10).toFixed(1) + "M";
+  } else {
+    return marketCap.toLocaleString();
+  }
+}
